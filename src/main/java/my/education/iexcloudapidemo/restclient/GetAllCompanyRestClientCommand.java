@@ -1,8 +1,11 @@
 package my.education.iexcloudapidemo.restclient;
 
 import lombok.RequiredArgsConstructor;
+import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.model.Company;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -10,7 +13,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author Nikita Gvardeev
@@ -19,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
-public class GetAllCompanyRestClientCommand implements RestClientCommand<List<Company>> {
+public class GetAllCompanyRestClientCommand implements RestClientCommand<List<CompanyDto>> {
 
     @Value("${iexcloud.companies}")
     private String urlApi;
@@ -27,8 +33,26 @@ public class GetAllCompanyRestClientCommand implements RestClientCommand<List<Co
 
     @Async
     @Override
-    public CompletableFuture<List<Company>> executeAsync() {
-        ResponseEntity<Company[]> response = restTemplate.getForEntity(urlApi, Company[].class);
-        return CompletableFuture.completedFuture(Arrays.asList(response.getBody()));
+    public CompletableFuture<List<CompanyDto>> executeAsync() {
+        return CompletableFuture.completedFuture(companies());
+    }
+
+    private List<CompanyDto> companies() {
+        ResponseEntity<List<Company>> responseEntity =
+                restTemplate.exchange(
+                        urlApi,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<>() {});
+
+        List<Company> companies = responseEntity.getBody();
+
+        if (Objects.isNull(companies))
+            throw new RuntimeException("API is invalid");
+
+        return companies
+                .stream()
+                .map(CompanyDto::toDto)
+                .collect(Collectors.toList());
     }
 }

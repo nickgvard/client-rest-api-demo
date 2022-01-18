@@ -3,6 +3,8 @@ package my.education.iexcloudapidemo.restclient;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import my.education.iexcloudapidemo.dto.CompanyDto;
+import my.education.iexcloudapidemo.dto.StockDto;
 import my.education.iexcloudapidemo.model.Company;
 import my.education.iexcloudapidemo.model.Stock;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,24 +23,28 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
-public class GetCompanyStockRestClientCommand implements RestClientCommand<Company> {
+public class GetCompanyStockRestClientCommand implements RestClientCommand<CompanyDto> {
 
     @Value("${iexcloud.stock}")
     private String urlApi;
 
     private final RestTemplate restTemplate;
-    @Setter private Company company;
+    @Setter private CompanyDto company;
 
     @Async
     @Override
-    public CompletableFuture<Company> executeAsync() {
+    public CompletableFuture<CompanyDto> executeAsync() {
+        return CompletableFuture.completedFuture(withStock());
+    }
+
+    private CompanyDto withStock() {
         Map<String, String> param = new HashMap<>();
         param.put("stockCode", company.getSymbol());
 
         Stock stock = restTemplate.getForObject(urlApi, Stock.class, param);
 
-        company.setStock(stock);
+        company.setStockDto(StockDto.toDto(stock));
 
-        return CompletableFuture.completedFuture(company);
+        return company;
     }
 }
