@@ -8,14 +8,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +21,7 @@ import java.util.stream.Collectors;
  * 17.01.2022
  */
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class GetAllCompanyRestClientCommand implements RestClientCommand<List<CompanyDto>> {
 
