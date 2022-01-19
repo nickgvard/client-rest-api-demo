@@ -1,8 +1,15 @@
 package my.education.iexcloudapidemo.service;
 
+import my.education.iexcloudapidemo.dto.CompanyDto;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Nikita Gvardeev
- * 17.01.2022
+ * 19.01.2022
  */
-public class CompanyService {
+public interface CompanyService {
+
+    CompletableFuture<List<CompanyDto>> findAll();
 }

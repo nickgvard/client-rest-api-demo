@@ -1,14 +1,15 @@
-package my.education.iexcloudapidemo.restclient;
+package my.education.iexcloudapidemo.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.model.Company;
+import my.education.iexcloudapidemo.service.CompanyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -21,27 +22,28 @@ import java.util.stream.Collectors;
  * 17.01.2022
  */
 
-@Component
+@Service
 @RequiredArgsConstructor
-public class GetAllCompanyRestClientCommand implements RestClientCommand<List<CompanyDto>> {
+public class CompanyServiceImpl implements CompanyService {
 
     @Value("${iexcloud.companies}")
     private String urlApi;
     private final RestTemplate restTemplate;
 
-    @Async
+    @Async("apiExecutor")
     @Override
-    public CompletableFuture<List<CompanyDto>> executeAsync() {
-        return CompletableFuture.completedFuture(companies());
+    public CompletableFuture<List<CompanyDto>> findAll() {
+        return CompletableFuture.supplyAsync(this::companies);
     }
 
     private List<CompanyDto> companies() {
-        ResponseEntity<List<Company>> responseEntity =
-                restTemplate.exchange(
+        ResponseEntity<List<Company>> responseEntity = restTemplate
+                .exchange(
                         urlApi,
                         HttpMethod.GET,
                         null,
-                        new ParameterizedTypeReference<>() {});
+                        new ParameterizedTypeReference<>() {
+                        });
 
         List<Company> companies = responseEntity.getBody();
 

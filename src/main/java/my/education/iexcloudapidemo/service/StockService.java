@@ -1,8 +1,14 @@
 package my.education.iexcloudapidemo.service;
 
+import my.education.iexcloudapidemo.dto.StockDto;
+
 /**
  * @author Nikita Gvardeev
- * 17.01.2022
+ * 19.01.2022
  */
-public class StockService {
+
+public interface StockService {
+
+    StockDto findBySymbol(String symbol);
+
 }
