@@ -13,14 +13,14 @@ import my.education.iexcloudapidemo.model.Stock;
 @Builder
 public class StockDto {
 
-    private Long id;
+    private Long previousVolume;
     private Long volume;
     private Float latestPrice;
 
     public static StockDto toDto(Stock stock) {
         return StockDto
                 .builder()
-                .id(stock.getId())
+                .previousVolume(stock.getPreviousVolume())
                 .volume(stock.getVolume())
                 .latestPrice(stock.getLatestPrice())
                 .build();
@@ -29,7 +29,7 @@ public class StockDto {
     public static Stock toDocument(StockDto stockDto) {
         return Stock
                 .builder()
-                .id(stockDto.getId())
+                .previousVolume(stockDto.getPreviousVolume())
                 .volume(stockDto.getVolume())
                 .latestPrice(stockDto.getLatestPrice())
                 .build();

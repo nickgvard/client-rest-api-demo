@@ -9,6 +9,6 @@ import my.education.iexcloudapidemo.dto.StockDto;
 
 public interface StockService {
 
-    StockDto findBySymbol(String symbol);
+    StockDto findBySymbolFromApi(String symbol);
 
 }

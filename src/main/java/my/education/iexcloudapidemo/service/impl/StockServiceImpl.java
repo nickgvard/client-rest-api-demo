@@ -26,7 +26,7 @@ public class StockServiceImpl implements StockService {
     private final RestTemplate restTemplate;
 
     @Override
-    public StockDto findBySymbol(String symbol) {
+    public StockDto findBySymbolFromApi(String symbol) {
         Map<String, String> param = new HashMap<>();
         param.put("stockCode", symbol);
 

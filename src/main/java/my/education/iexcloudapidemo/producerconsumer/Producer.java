@@ -28,7 +28,7 @@ public class Producer {
     @Async("apiExecutor")
     public void produce() {
         while (!stop.get()) {
-            CompletableFuture<List<CompanyDto>> future = companyService.findAll();
+            CompletableFuture<List<CompanyDto>> future = companyService.findAllFromApi();
             if (future.isDone()) {
                 try {
                     List<CompanyDto> companies = future.get();

@@ -1,12 +1,12 @@
 package my.education.iexcloudapidemo.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 /**
  * @author Nikita Gvardeev
@@ -15,14 +15,14 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 
 @Document
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Company {
 
-    @MongoId
+    @Id
     private Long id;
+    @Indexed(unique = true)
     private String symbol;
     private Boolean isEnabled;
     private Stock stock;

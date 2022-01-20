@@ -11,5 +11,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface CompanyService {
 
-    CompletableFuture<List<CompanyDto>> findAll();
+    CompletableFuture<List<CompanyDto>> findAllFromApi();
+
+    CompanyDto save(CompanyDto companyDto);
 }
