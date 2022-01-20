@@ -3,6 +3,7 @@ package my.education.iexcloudapidemo.producerconsumer;
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.service.CompanyService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class Producer {
     private final CompanyService companyService;
     private final AtomicBoolean stop;
 
+    @Async("apiExecutor")
     public void produce() {
         while (!stop.get()) {
             CompletableFuture<List<CompanyDto>> future = companyService.findAll();

@@ -31,19 +31,26 @@ public class Consumer {
     public void consume() {
         while (!stop.get()) {
             try {
-                CompletableFuture firstConsume = asyncExecute(blockingQueue.take());
-                CompletableFuture secondConsume = asyncExecute(blockingQueue.take());
+                CompanyDto companyDto = blockingQueue.take();
 
-            } catch (InterruptedException | ExecutionException e) {
+                findBySymbol(companyDto)
+                        .thenCompose(stockDto -> saveCompany(companyDto, stockDto));
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private CompletableFuture asyncExecute(CompanyDto company) throws InterruptedException, ExecutionException {
-        CompletableFuture<CompanyDto> future = CompletableFuture
-                .supplyAsync(() -> stockService.findBySymbol(company.getSymbol()))
-                .thenAccept(stockDto -> company.setStockDto(stockDto));
-        companyRepository.save(CompanyDto.toDocument(company));
+    private CompletableFuture<StockDto> findBySymbol(CompanyDto companyDto) {
+        return CompletableFuture.supplyAsync(
+                () -> stockService.findBySymbol(companyDto.getSymbol()));
+    }
+
+    private CompletableFuture<CompanyDto> saveCompany(CompanyDto companyDto, StockDto stockDto) {
+        return CompletableFuture.supplyAsync(() -> {
+            companyDto.setStockDto(stockDto);
+            return CompanyDto.toDto(
+                    companyRepository.save(CompanyDto.toDocument(companyDto)));
+        });
     }
 }

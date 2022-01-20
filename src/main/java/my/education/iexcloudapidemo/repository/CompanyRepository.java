@@ -7,7 +7,7 @@ import my.education.iexcloudapidemo.model.Company;
  * 17.01.2022
  */
 public class CompanyRepository {
-    public void save(Company company) {
-
+    public Company save(Company company) {
+        return null;
     }
 }
