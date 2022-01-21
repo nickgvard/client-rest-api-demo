@@ -8,9 +8,11 @@ import my.education.iexcloudapidemo.service.StockService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * @author Nikita Gvardeev
@@ -32,13 +34,11 @@ public class Consumer {
             try {
                 CompanyDto companyDto = blockingQueue.take();
 
-                CompletableFuture<CompanyDto> first = findBySymbol(companyDto)
-                        .thenCompose(stockDto -> saveCompany(companyDto, stockDto));
+                CompletableFuture<CompanyDto> first = saveCompany(blockingQueue.take());
 
-                CompletableFuture<CompanyDto> second = findBySymbol(companyDto)
-                        .thenCompose(stockDto -> saveCompany(companyDto, stockDto));
+                CompletableFuture<CompanyDto> second = saveCompany(blockingQueue.take());
 
-                CompletableFuture<Void> combine = CompletableFuture.allOf(first, second);
+                CompletableFuture.allOf(first, second);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -46,15 +46,19 @@ public class Consumer {
         }
     }
 
-    private CompletableFuture<StockDto> findBySymbol(CompanyDto companyDto) {
-        return CompletableFuture.supplyAsync(
-                () -> stockService.findBySymbolFromApi(companyDto.getSymbol()));
-    }
-
-    private CompletableFuture<CompanyDto> saveCompany(CompanyDto companyDto, StockDto stockDto) {
-        return CompletableFuture.supplyAsync(() -> {
-            companyDto.setStockDto(stockDto);
-            return companyDto;
-        }).thenApply(companyService::save);
+    private CompletableFuture<CompanyDto> saveCompany(CompanyDto companyDto) {
+        Supplier<StockDto> findBySymbol = () -> stockService.findBySymbolFromApi(companyDto.getSymbol());
+        return CompletableFuture.supplyAsync(findBySymbol)
+                .thenApply(stockDto -> {
+                    companyDto.setStockDto(stockDto);
+                    return companyDto;
+                })
+                .thenCompose(companyService::save)
+                .handle((dto, throwable) -> {
+                    if (Objects.isNull(dto))
+                        throw new RuntimeException(throwable.getMessage());
+                    else
+                        return dto;
+                });
     }
 }

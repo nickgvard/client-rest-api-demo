@@ -1,7 +1,14 @@
 package my.education.iexcloudapidemo.config;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
@@ -15,7 +22,13 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
+@EnableMongoRepositories("my.education.iexcloudapidemo.repository")
 public class Config {
+
+    @Value("spring.data.mongodb.uri")
+    private String url;
+    @Value("spring.data.mongodb.database")
+    private String dataBase;
 
     @Bean
     public RestTemplate restTemplate() {
@@ -30,5 +43,18 @@ public class Config {
         executor.setThreadNamePrefix("APIExecutor-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean
+    public MongoClient mongoClient() {
+        ConnectionString connectionString = new ConnectionString(url);
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .build();
+        return MongoClients.create(settings);
+    }
+
+    public MongoTemplate mongoTemplate() {
+        return new MongoTemplate(mongoClient(), dataBase);
     }
 }

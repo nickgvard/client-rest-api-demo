@@ -1,5 +1,6 @@
 package my.education.iexcloudapidemo.service.impl;
 
+import com.mongodb.client.result.UpdateResult;
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.model.Company;
@@ -7,6 +8,10 @@ import my.education.iexcloudapidemo.repository.MongoCompanyRepository;
 import my.education.iexcloudapidemo.service.CompanyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -31,7 +36,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Value("${iexcloud.companies}")
     private String urlApi;
     private final RestTemplate restTemplate;
-    private final MongoCompanyRepository repository;
+    private final MongoTemplate mongoTemplate;
 
     @Async("apiExecutor")
     @Override
@@ -60,8 +65,22 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public CompanyDto save(CompanyDto companyDto) {
-        Company company = CompanyDto.toDocument(companyDto);
-        return CompanyDto.toDto(repository.insert(company));
+    public CompletableFuture<CompanyDto> save(CompanyDto companyDto) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("previousVolume").ne(companyDto.getStockDto().getPreviousVolume()));
+
+        Update upsert = new Update();
+        upsert.set("previousVolume", companyDto.getStockDto().getPreviousVolume());
+
+        UpdateResult result = mongoTemplate.upsert(query, upsert, Company.class);
+
+        if (Objects.isNull(result.getUpsertedId()))
+            throw new NullPointerException("Upsert with: " + companyDto.getSymbol() + " is failed");
+
+        String id = result.getUpsertedId().asString().getValue();
+
+        Company company = mongoTemplate.findById(id, Company.class);
+
+        return CompletableFuture.completedFuture(CompanyDto.toDto(company));
     }
 }
