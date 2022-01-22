@@ -14,4 +14,6 @@ public interface CompanyService {
     CompletableFuture<List<CompanyDto>> findAllFromApi();
 
     CompletableFuture<CompanyDto> save(CompanyDto companyDto);
+
+    CompletableFuture<List<CompanyDto>> topFiveAndOther();
 }

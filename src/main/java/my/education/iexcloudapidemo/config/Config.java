@@ -25,9 +25,9 @@ import java.util.concurrent.Executor;
 @EnableMongoRepositories("my.education.iexcloudapidemo.repository")
 public class Config {
 
-    @Value("spring.data.mongodb.uri")
+    @Value("${spring.data.mongodb.uri}")
     private String url;
-    @Value("spring.data.mongodb.database")
+    @Value("${spring.data.mongodb.database}")
     private String dataBase;
 
     @Bean
@@ -54,6 +54,7 @@ public class Config {
         return MongoClients.create(settings);
     }
 
+    @Bean
     public MongoTemplate mongoTemplate() {
         return new MongoTemplate(mongoClient(), dataBase);
     }

@@ -1,28 +1,34 @@
 package my.education.iexcloudapidemo.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
+
 /**
  * @author Nikita Gvardeev
- * 17.01.2022
+ * 22.01.2022
  */
 
-@Document("companies")
+@Document("logbook")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Company {
+public class Logbook {
 
     @Id
-    private Long id;
+    private String id;
     @Indexed(unique = true)
     private String symbol;
-    private Boolean isEnabled;
-    private Stock stock;
+    private Float oldPrice;
+    private Float currentPrice;
+    private LocalDate registry;
 }

@@ -1,28 +1,29 @@
 package my.education.iexcloudapidemo.service.impl;
 
-import com.mongodb.client.result.UpdateResult;
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
+import my.education.iexcloudapidemo.dto.StockDto;
 import my.education.iexcloudapidemo.model.Company;
+import my.education.iexcloudapidemo.model.Stock;
 import my.education.iexcloudapidemo.repository.MongoCompanyRepository;
 import my.education.iexcloudapidemo.service.CompanyService;
+import my.education.iexcloudapidemo.service.StockService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Nikita Gvardeev
@@ -36,7 +37,8 @@ public class CompanyServiceImpl implements CompanyService {
     @Value("${iexcloud.companies}")
     private String urlApi;
     private final RestTemplate restTemplate;
-    private final MongoTemplate mongoTemplate;
+    private final MongoCompanyRepository repository;
+    private final StockService stockService;
 
     @Async("apiExecutor")
     @Override
@@ -64,23 +66,38 @@ public class CompanyServiceImpl implements CompanyService {
         return CompletableFuture.supplyAsync(findAll);
     }
 
+    @Async("apiExecutor")
     @Override
     public CompletableFuture<CompanyDto> save(CompanyDto companyDto) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("previousVolume").ne(companyDto.getStockDto().getPreviousVolume()));
+        StockDto bySymbol = stockService.findBySymbol(companyDto.getSymbol());
+        companyDto.setStockDto(bySymbol);
 
-        Update upsert = new Update();
-        upsert.set("previousVolume", companyDto.getStockDto().getPreviousVolume());
+        Company company = CompanyDto.toDocument(companyDto);
+        Company saved = repository.save(company);
+        return CompletableFuture.completedFuture(CompanyDto.toDto(saved));
+    }
 
-        UpdateResult result = mongoTemplate.upsert(query, upsert, Company.class);
+    @Override
+    public CompletableFuture<List<CompanyDto>> topFiveAndOther() {
+        List<CompanyDto> topFive = repository
+                .findTop5By(
+                        Sort.by(Sort.Direction.DESC, "previousVolume", "volume"))
+                .stream().map(CompanyDto::toDto)
+                .collect(Collectors.toList());
 
-        if (Objects.isNull(result.getUpsertedId()))
-            throw new NullPointerException("Upsert with: " + companyDto.getSymbol() + " is failed");
+        List<CompanyDto> other = repository
+                .findCompaniesBySymbolNotInOrderBySymbolDesc(
+                        topFive
+                                .stream()
+                                .map(CompanyDto::getSymbol)
+                                .collect(Collectors.toList()))
+                .stream()
+                .map(CompanyDto::toDto)
+                .collect(Collectors.toList());
 
-        String id = result.getUpsertedId().asString().getValue();
-
-        Company company = mongoTemplate.findById(id, Company.class);
-
-        return CompletableFuture.completedFuture(CompanyDto.toDto(company));
+        return CompletableFuture.completedFuture(
+                Stream.of(topFive, other)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList()));
     }
 }

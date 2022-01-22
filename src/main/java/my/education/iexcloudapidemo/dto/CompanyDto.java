@@ -21,7 +21,7 @@ public class CompanyDto {
     private StockDto stockDto;
 
     public static CompanyDto toDto(Company company) {
-        return my.education.iexcloudapidemo.dto.CompanyDto
+        return CompanyDto
                 .builder()
                 .id(company.getId())
                 .symbol(company.getSymbol())

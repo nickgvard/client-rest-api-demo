@@ -28,18 +28,17 @@ public class Producer {
     @Async("apiExecutor")
     public void produce() {
         while (!stop.get()) {
-            CompletableFuture<List<CompanyDto>> future = companyService.findAllFromApi();
-            if (future.isDone()) {
-                try {
-                    List<CompanyDto> companies = future.get();
-
-                    for (CompanyDto company : companies)
-                        blockingQueue.put(company);
-
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }
+            CompletableFuture<Void> future = companyService.findAllFromApi()
+                    .thenAccept(companies -> {
+                        for (CompanyDto company : companies) {
+                            try {
+                                if (company.getIsEnabled())
+                                    blockingQueue.put(company);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
         }
     }
 }
