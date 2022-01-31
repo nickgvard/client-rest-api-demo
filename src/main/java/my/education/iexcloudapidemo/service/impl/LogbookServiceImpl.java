@@ -1,21 +1,18 @@
 package my.education.iexcloudapidemo.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.dto.LogbookDto;
 import my.education.iexcloudapidemo.model.Logbook;
-import my.education.iexcloudapidemo.repository.MongoLogbookRepository;
+import my.education.iexcloudapidemo.repository.LogbookRepository;
 import my.education.iexcloudapidemo.service.LogbookService;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
 /**
  * @author Nikita Gvardeev
@@ -26,42 +23,51 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 @RequiredArgsConstructor
 public class LogbookServiceImpl implements LogbookService {
 
-    private final MongoLogbookRepository repository;
-    private final MongoTemplate mongoTemplate;
+    private final LogbookRepository repository;
 
+    @Async("apiExecutor")
     @Override
-    public CompletableFuture<LogbookDto> save(LogbookDto logbookDto) {
-        Logbook persist = repository.findById(logbookDto.getId()).orElse(null);
+    public CompletableFuture<List<LogbookDto>> saveAll(List<CompanyDto> companies) {
+        List<LogbookDto> logbooks = companies
+                .stream()
+                .map(companyDto -> LogbookDto.builder()
+                        .companyDto(companyDto)
+                        .currentPrice(companyDto.getLatestPrice())
+                        .build()).collect(Collectors.toList());
 
-        Logbook currentLogbook = LogbookDto.toDocument(logbookDto);
+        for (LogbookDto dto : logbooks) {
+            CompletableFuture<Logbook> findById = CompletableFuture
+                    .supplyAsync(() -> repository.findById(dto.getId()).orElse(null));
+            CompletableFuture<Logbook> toEntity = CompletableFuture
+                    .supplyAsync(() -> LogbookDto.toEntity(dto));
 
-        if (Objects.nonNull(persist)) {
-            currentLogbook.setOldPrice(persist.getCurrentPrice());
+            findById.thenCombine(toEntity, (found, entity) -> {
+                if (Objects.nonNull(found)) {
+                    entity.setOldPrice(found.getCurrentPrice());
+                }
+                return entity;
+            });
         }
 
-        Logbook saved = repository.save(currentLogbook);
-        return CompletableFuture.completedFuture(LogbookDto.toDto(saved));
+        List<Logbook> forSave = logbooks
+                .stream()
+                .map(LogbookDto::toEntity)
+                .collect(Collectors.toList());
+
+        List<Logbook> saved = repository.saveAll(forSave);
+
+        return CompletableFuture.completedFuture(saved
+                .stream()
+                .map(LogbookDto::toDto)
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public CompletableFuture<List<LogbookDto>> topFiveDeltaLatestPrice() {
-        ProjectionOperation projectionOperation = project("symbol")
-                .and("priceCur")
-                .minus("priceOld")
-                .absoluteValue()
-                .as("absoluteDelta");
-        SortOperation sortOperation = sort(Sort.by(Sort.Direction.DESC));
-        LimitOperation limitOperation = limit(5);
-
-        Aggregation aggregation = newAggregation(projectionOperation, sortOperation, limitOperation);
-
-        AggregationResults<Logbook> results = mongoTemplate.aggregate(aggregation, "logbook", Logbook.class);
-
-        List<LogbookDto> mappedResults = results.getMappedResults()
+    public CompletableFuture<List<LogbookDto>> findTop5ByDeltaLatestPrice() {
+        List<Logbook> findByDelta = repository.findTop5();
+        return CompletableFuture.completedFuture(findByDelta
                 .stream()
                 .map(LogbookDto::toDto)
-                .collect(Collectors.toList());
-
-        return CompletableFuture.completedFuture(mappedResults);
+                .collect(Collectors.toList()));
     }
 }

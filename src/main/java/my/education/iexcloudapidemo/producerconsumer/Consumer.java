@@ -2,18 +2,15 @@ package my.education.iexcloudapidemo.producerconsumer;
 
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
-import my.education.iexcloudapidemo.dto.LogbookDto;
-import my.education.iexcloudapidemo.dto.StockDto;
-import my.education.iexcloudapidemo.model.Logbook;
 import my.education.iexcloudapidemo.service.CompanyService;
 import my.education.iexcloudapidemo.service.LogbookService;
-import my.education.iexcloudapidemo.service.StockService;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Nikita Gvardeev
@@ -27,33 +24,43 @@ public class Consumer {
     private final BlockingQueue<CompanyDto> blockingQueue;
     private final CompanyService companyService;
     private final LogbookService logbookService;
-    private final AtomicBoolean stop;
 
-    @Async("apiExecutor")
+    @Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+    private int batchSize;
+
     public void consume() {
-        while (!stop.get()) {
+        List<CompanyDto> batch = new ArrayList<>();
+        int i = 0;
+        while (!blockingQueue.isEmpty()) {
             try {
-                CompletableFuture<Void> first = saveCompany(blockingQueue.take());
-                CompletableFuture<Void> second = saveCompany(blockingQueue.take());
-
-                CompletableFuture.allOf(first, second);
+                CompanyDto take = blockingQueue.take();
+                batch.add(take);
+                if (i++ != batchSize || blockingQueue.size() == 0) {
+                    CompletableFuture<List<CompanyDto>> asyncRequest = asyncRequestForEachCompany(batch);
+                    asyncRequest.thenAccept(companies -> {
+                        batchSaveToCompany(companies);
+                        batchSaveToLogbook(companies);
+                    });
+                    batch.clear();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private CompletableFuture<Void> saveCompany(CompanyDto companyDto) {
-        return CompletableFuture.runAsync(() ->
-                companyService.save(companyDto)
-                        .thenCompose(this::saveLogbook));
+    private CompletableFuture<List<CompanyDto>> asyncRequestForEachCompany(List<CompanyDto> companies) {
+        return CompletableFuture.supplyAsync(() -> {
+            companies.forEach(companyService::findStockByCompanyFromApi);
+            return companies;
+        });
     }
 
-    private CompletableFuture<Void> saveLogbook(CompanyDto companyDto) {
-        return CompletableFuture.runAsync(() -> logbookService.save(
-                LogbookDto.builder()
-                        .symbol(companyDto.getSymbol())
-                        .currentPrice(companyDto.getStockDto().getLatestPrice())
-                        .build()));
+    private void batchSaveToCompany(List<CompanyDto> companies) {
+        CompletableFuture.runAsync(() -> companyService.saveAll(companies));
+    }
+
+    private void batchSaveToLogbook(List<CompanyDto> companies) {
+        CompletableFuture.runAsync(() -> logbookService.saveAll(companies));
     }
 }

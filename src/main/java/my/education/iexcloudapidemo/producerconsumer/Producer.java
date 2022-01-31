@@ -23,22 +23,21 @@ public class Producer {
 
     private final BlockingQueue<CompanyDto> blockingQueue;
     private final CompanyService companyService;
-    private final AtomicBoolean stop;
 
     @Async("apiExecutor")
     public void produce() {
-        while (!stop.get()) {
-            CompletableFuture<Void> future = companyService.findAllFromApi()
-                    .thenAccept(companies -> {
-                        for (CompanyDto company : companies) {
-                            try {
-                                if (company.getIsEnabled())
-                                    blockingQueue.put(company);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+        CompletableFuture.supplyAsync(() -> companyService.findAllFromApi()
+                .thenAccept(companies -> {
+                    for (CompanyDto company : companies) {
+                        try {
+                            if (company.getIsEnabled()) {
+                                blockingQueue.put(company);
                             }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                    });
-        }
+                    }
+                }));
+
     }
 }

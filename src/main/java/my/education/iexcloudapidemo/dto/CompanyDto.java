@@ -1,10 +1,10 @@
 package my.education.iexcloudapidemo.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
 import lombok.Data;
 import my.education.iexcloudapidemo.model.Company;
 
-import java.util.Objects;
 
 /**
  * @author Nikita Gvardeev
@@ -13,12 +13,15 @@ import java.util.Objects;
 
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CompanyDto {
 
     private Long id;
     private String symbol;
     private Boolean isEnabled;
-    private StockDto stockDto;
+    private Long previousVolume;
+    private Long volume;
+    private Float latestPrice;
 
     public static CompanyDto toDto(Company company) {
         return CompanyDto
@@ -26,19 +29,21 @@ public class CompanyDto {
                 .id(company.getId())
                 .symbol(company.getSymbol())
                 .isEnabled(company.getIsEnabled())
-                .stockDto(Objects.nonNull(company.getStock()) ? StockDto
-                        .toDto(company.getStock()) : null)
+                .previousVolume(company.getPreviousVolume())
+                .volume(company.getVolume())
+                .latestPrice(company.getLatestPrice())
                 .build();
     }
 
-    public static Company toDocument(CompanyDto companyDto) {
+    public static Company toEntity(CompanyDto companyDto) {
         return Company
                 .builder()
                 .id(companyDto.getId())
                 .symbol(companyDto.getSymbol())
                 .isEnabled(companyDto.getIsEnabled())
-                .stock(Objects.nonNull(companyDto.getStockDto()) ? StockDto
-                        .toDocument(companyDto.getStockDto()) : null)
+                .previousVolume(companyDto.getPreviousVolume())
+                .volume(companyDto.getVolume())
+                .latestPrice(companyDto.getLatestPrice())
                 .build();
     }
 }

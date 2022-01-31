@@ -1,5 +1,6 @@
 package my.education.iexcloudapidemo.service;
 
+import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.dto.LogbookDto;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface LogbookService {
 
-    CompletableFuture<LogbookDto> save(LogbookDto logbookDto);
+    CompletableFuture<List<LogbookDto>> saveAll(List<CompanyDto> companies);
 
-    CompletableFuture<List<LogbookDto>> topFiveDeltaLatestPrice();
+    CompletableFuture<List<LogbookDto>> findTop5ByDeltaLatestPrice();
 }

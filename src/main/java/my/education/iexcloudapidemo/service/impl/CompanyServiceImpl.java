@@ -2,12 +2,9 @@ package my.education.iexcloudapidemo.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import my.education.iexcloudapidemo.dto.CompanyDto;
-import my.education.iexcloudapidemo.dto.StockDto;
 import my.education.iexcloudapidemo.model.Company;
-import my.education.iexcloudapidemo.model.Stock;
-import my.education.iexcloudapidemo.repository.MongoCompanyRepository;
+import my.education.iexcloudapidemo.repository.CompanyRepository;
 import my.education.iexcloudapidemo.service.CompanyService;
-import my.education.iexcloudapidemo.service.StockService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Sort;
@@ -17,9 +14,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,11 +29,17 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
 
-    @Value("${iexcloud.companies}")
-    private String urlApi;
+    @Value("${iexcloud.url.companies}")
+    private String apiCompanies;
+
+    @Value("${iexcloud.url.stock}")
+    private String urlStockApi;
+
+    @Value("${iexcloud.stock.code}")
+    private String stockKeyCode;
+
     private final RestTemplate restTemplate;
-    private final MongoCompanyRepository repository;
-    private final StockService stockService;
+    private final CompanyRepository repository;
 
     @Async("apiExecutor")
     @Override
@@ -46,7 +47,7 @@ public class CompanyServiceImpl implements CompanyService {
         Supplier<List<CompanyDto>> findAll = () -> {
             ResponseEntity<List<Company>> responseEntity = restTemplate
                     .exchange(
-                            urlApi,
+                            apiCompanies,
                             HttpMethod.GET,
                             null,
                             new ParameterizedTypeReference<>() {
@@ -68,17 +69,40 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Async("apiExecutor")
     @Override
-    public CompletableFuture<CompanyDto> save(CompanyDto companyDto) {
-        StockDto bySymbol = stockService.findBySymbol(companyDto.getSymbol());
-        companyDto.setStockDto(bySymbol);
+    public CompletableFuture<CompanyDto> findStockByCompanyFromApi(CompanyDto companyDto) {
+        Map<String, String> param = new HashMap<>();
+        param.put(stockKeyCode, companyDto.getSymbol());
 
-        Company company = CompanyDto.toDocument(companyDto);
-        Company saved = repository.save(company);
-        return CompletableFuture.completedFuture(CompanyDto.toDto(saved));
+        CompanyDto fromApi = restTemplate.getForObject(urlStockApi, CompanyDto.class, param);
+
+        if (Objects.isNull(fromApi))
+            throw new RuntimeException("API is invalid");
+
+        companyDto.setPreviousVolume(fromApi.getPreviousVolume());
+        companyDto.setVolume(fromApi.getVolume());
+        companyDto.setLatestPrice(fromApi.getLatestPrice());
+
+        return CompletableFuture.completedFuture(companyDto);
+    }
+
+    @Async("apiExecutor")
+    @Override
+    public CompletableFuture<List<CompanyDto>> saveAll(List<CompanyDto> companies) {
+        List<Company> forSave = companies
+                .stream()
+                .map(CompanyDto::toEntity)
+                .collect(Collectors.toList());
+
+        List<Company> persists = repository.saveAll(forSave);
+
+        return CompletableFuture.completedFuture(persists
+                .stream()
+                .map(CompanyDto::toDto)
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public CompletableFuture<List<CompanyDto>> topFiveAndOther() {
+    public CompletableFuture<List<CompanyDto>> findTop5CompaniesAndOther() {
         List<CompanyDto> topFive = repository
                 .findTop5By(
                         Sort.by(Sort.Direction.DESC, "previousVolume", "volume"))

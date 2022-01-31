@@ -1,28 +1,34 @@
 package my.education.iexcloudapidemo.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.persistence.*;
 
 /**
  * @author Nikita Gvardeev
  * 17.01.2022
  */
 
-@Document("companies")
+@Entity
+@Table(name = "companies", schema = "public")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Company {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Indexed(unique = true)
     private String symbol;
+    @Column(name = "is_enabled")
     private Boolean isEnabled;
-    private Stock stock;
+    @Column(name = "previous_volume")
+    private Long previousVolume;
+    private Long volume;
+    @Column(name = "latest_price")
+    private Float latestPrice;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private Logbook logbook;
 }

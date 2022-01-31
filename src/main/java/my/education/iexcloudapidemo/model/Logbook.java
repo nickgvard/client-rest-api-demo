@@ -1,14 +1,11 @@
 package my.education.iexcloudapidemo.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.persistence.*;
 import java.time.LocalDate;
 
 /**
@@ -16,19 +13,23 @@ import java.time.LocalDate;
  * 22.01.2022
  */
 
-@Document("logbook")
+@Entity
+@Table(name = "logbook", schema = "public")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Logbook {
 
     @Id
-    private String id;
-    @Indexed(unique = true)
-    private String symbol;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "old_price")
     private Float oldPrice;
+    @Column(name = "current_price")
     private Float currentPrice;
     private LocalDate registry;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "company_id", referencedColumnName = "id")
+    private Company company;
 }
