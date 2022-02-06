@@ -16,7 +16,9 @@ import java.util.List;
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, Long> {
 
+    Company findBySymbol(String symbol);
+
     List<Company> findTop5By(Sort sort);
 
-    List<Company> findCompaniesBySymbolNotInOrderBySymbolDesc(Collection<String> symbols);
+    List<Company> findCompaniesBySymbolNotInOrderBySymbolAsc(Collection<String> symbols);
 }

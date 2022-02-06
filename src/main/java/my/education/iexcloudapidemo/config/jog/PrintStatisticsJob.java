@@ -24,7 +24,9 @@ public class PrintStatisticsJob {
 
     @Scheduled(fixedDelayString = "${schedule.delay.print}")
     public void startPrint() {
-        log.info(companyService.findTop5CompaniesAndOther().toString());
-        log.info(logbookService.findTop5ByDeltaLatestPrice().toString());
+        log.info("Statistic of the top 5 highest value stocks (in order – largest first, then order by company name) {}",
+                companyService.findTop5CompaniesAndOther().toString());
+        log.info("Statistic of the most recent 5 companies that have the greatest change percent in stock value {}",
+                logbookService.findTop5ByDeltaLatestPrice().toString());
     }
 }

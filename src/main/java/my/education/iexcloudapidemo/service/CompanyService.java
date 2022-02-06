@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface CompanyService {
 
-    CompletableFuture<List<CompanyDto>> findAllFromApi();
+    CompletableFuture<List<CompanyDto>> findAll();
 
-    CompletableFuture<CompanyDto> findStockByCompanyFromApi(CompanyDto companyDto);
+    CompletableFuture<CompanyDto> findStockByCompany(CompanyDto company);
 
-    CompletableFuture<List<CompanyDto>> saveAll(List<CompanyDto> companyDto);
+    CompletableFuture<List<CompanyDto>> saveAll(List<CompanyDto> companies);
 
     CompletableFuture<List<CompanyDto>> findTop5CompaniesAndOther();
 }

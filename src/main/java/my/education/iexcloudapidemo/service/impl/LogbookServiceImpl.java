@@ -1,11 +1,13 @@
 package my.education.iexcloudapidemo.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.dto.LogbookDto;
 import my.education.iexcloudapidemo.model.Logbook;
 import my.education.iexcloudapidemo.repository.LogbookRepository;
 import my.education.iexcloudapidemo.service.LogbookService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -21,50 +23,44 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LogbookServiceImpl implements LogbookService {
 
     private final LogbookRepository repository;
 
-    @Async("apiExecutor")
+    @Async
     @Override
     public CompletableFuture<List<LogbookDto>> saveAll(List<CompanyDto> companies) {
-        List<LogbookDto> logbooks = companies
-                .stream()
-                .map(companyDto -> LogbookDto.builder()
-                        .companyDto(companyDto)
-                        .currentPrice(companyDto.getLatestPrice())
-                        .build()).collect(Collectors.toList());
+        return CompletableFuture.supplyAsync(() -> {
+            List<Logbook> toSave = companies.stream()
+                    .map(companyDto -> Logbook.builder()
+                            .company(CompanyDto.toEntity(companyDto))
+                            .currentPrice(companyDto.getLatestPrice())
+                            .build())
+                    .collect(Collectors.toList());
 
-        for (LogbookDto dto : logbooks) {
-            CompletableFuture<Logbook> findById = CompletableFuture
-                    .supplyAsync(() -> repository.findById(dto.getId()).orElse(null));
-            CompletableFuture<Logbook> toEntity = CompletableFuture
-                    .supplyAsync(() -> LogbookDto.toEntity(dto));
-
-            findById.thenCombine(toEntity, (found, entity) -> {
-                if (Objects.nonNull(found)) {
-                    entity.setOldPrice(found.getCurrentPrice());
+            List<Logbook> persists = toSave.stream().map(logbook -> {
+                Logbook bySymbol = repository.findByCompanySymbol(logbook.getCompany().getSymbol());
+                if (Objects.nonNull(bySymbol)) {
+                    bySymbol.setOldPrice(bySymbol.getCurrentPrice());
+                    bySymbol.setCurrentPrice(logbook.getCurrentPrice());
+                    return repository.save(bySymbol);
+                } else {
+                    return repository.save(logbook);
                 }
-                return entity;
-            });
-        }
+            }).collect(Collectors.toList());
 
-        List<Logbook> forSave = logbooks
-                .stream()
-                .map(LogbookDto::toEntity)
-                .collect(Collectors.toList());
-
-        List<Logbook> saved = repository.saveAll(forSave);
-
-        return CompletableFuture.completedFuture(saved
-                .stream()
-                .map(LogbookDto::toDto)
-                .collect(Collectors.toList()));
+            return persists
+                    .stream()
+                    .map(LogbookDto::toDto)
+                    .collect(Collectors.toList());
+        });
     }
 
+    @Async
     @Override
     public CompletableFuture<List<LogbookDto>> findTop5ByDeltaLatestPrice() {
-        List<Logbook> findByDelta = repository.findTop5();
+        List<Logbook> findByDelta = repository.findTop5By(PageRequest.of(0, 5));
         return CompletableFuture.completedFuture(findByDelta
                 .stream()
                 .map(LogbookDto::toDto)

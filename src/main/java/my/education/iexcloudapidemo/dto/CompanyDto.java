@@ -1,8 +1,7 @@
 package my.education.iexcloudapidemo.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import my.education.iexcloudapidemo.model.Company;
 
 
@@ -13,14 +12,21 @@ import my.education.iexcloudapidemo.model.Company;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CompanyDto {
 
+    @ToString.Exclude
     private Long id;
     private String symbol;
+    @ToString.Exclude
     private Boolean isEnabled;
+    @ToString.Exclude
     private Long previousVolume;
+    @ToString.Exclude
     private Long volume;
+    @ToString.Exclude
     private Float latestPrice;
 
     public static CompanyDto toDto(Company company) {

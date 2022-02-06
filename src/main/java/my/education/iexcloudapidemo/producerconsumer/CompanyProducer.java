@@ -1,16 +1,13 @@
 package my.education.iexcloudapidemo.producerconsumer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import my.education.iexcloudapidemo.dto.CompanyDto;
 import my.education.iexcloudapidemo.service.CompanyService;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Nikita Gvardeev
@@ -19,25 +16,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RequiredArgsConstructor
-public class Producer {
+@Slf4j
+public class CompanyProducer {
 
+    private final AtomicInteger count;
     private final BlockingQueue<CompanyDto> blockingQueue;
     private final CompanyService companyService;
 
-    @Async("apiExecutor")
     public void produce() {
-        CompletableFuture.supplyAsync(() -> companyService.findAllFromApi()
+        companyService.findAll()
                 .thenAccept(companies -> {
-                    for (CompanyDto company : companies) {
-                        try {
+                    try {
+                        int i = 0;
+                        for (CompanyDto company : companies) {
                             if (company.getIsEnabled()) {
                                 blockingQueue.put(company);
                             }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            count.set(i++);
                         }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                }));
-
+                });
     }
 }

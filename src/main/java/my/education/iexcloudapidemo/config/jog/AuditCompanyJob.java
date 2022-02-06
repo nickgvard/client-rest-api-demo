@@ -1,8 +1,8 @@
 package my.education.iexcloudapidemo.config.jog;
 
 import lombok.RequiredArgsConstructor;
-import my.education.iexcloudapidemo.producerconsumer.Consumer;
-import my.education.iexcloudapidemo.producerconsumer.Producer;
+import my.education.iexcloudapidemo.producerconsumer.CompanyConsumer;
+import my.education.iexcloudapidemo.producerconsumer.CompanyProducer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,12 +17,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 public class AuditCompanyJob {
 
-    private final Producer producer;
-    private final Consumer consumer;
+    private final CompanyProducer companyProducer;
+    private final CompanyConsumer companyConsumer;
 
     @Scheduled(fixedDelayString = "${schedule.delay.audit}")
     public void startAudit() {
-        producer.produce();
-        consumer.consume();
+        companyProducer.produce();
+        companyConsumer.consume();
     }
 }

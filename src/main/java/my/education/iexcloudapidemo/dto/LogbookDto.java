@@ -1,11 +1,9 @@
 package my.education.iexcloudapidemo.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import my.education.iexcloudapidemo.model.Logbook;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -15,13 +13,15 @@ import java.util.Objects;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LogbookDto {
 
+    @ToString.Exclude
     private Long id;
     private Float oldPrice;
     private Float currentPrice;
-    private LocalDate registry;
     private CompanyDto companyDto;
 
     public static LogbookDto toDto(Logbook logbook) {
@@ -30,7 +30,6 @@ public class LogbookDto {
                 .id(logbook.getId())
                 .oldPrice(logbook.getOldPrice())
                 .currentPrice(logbook.getCurrentPrice())
-                .registry(logbook.getRegistry())
                 .companyDto(Objects.nonNull(logbook.getCompany())
                         ? CompanyDto.toDto( logbook.getCompany())
                         : null)
@@ -43,7 +42,6 @@ public class LogbookDto {
                 .id(logbookDto.getId())
                 .oldPrice(logbookDto.getOldPrice())
                 .currentPrice(logbookDto.getCurrentPrice())
-                .registry(logbookDto.getRegistry())
                 .company(Objects.nonNull(logbookDto.getCompanyDto())
                         ? CompanyDto.toEntity(logbookDto.getCompanyDto())
                         : null)
