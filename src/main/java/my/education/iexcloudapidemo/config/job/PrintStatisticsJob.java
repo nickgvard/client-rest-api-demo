@@ -1,4 +1,4 @@
-package my.education.iexcloudapidemo.config.jog;
+package my.education.iexcloudapidemo.config.job;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

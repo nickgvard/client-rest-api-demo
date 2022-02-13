@@ -64,17 +64,20 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     public CompletableFuture<CompanyDto> findStockByCompany(CompanyDto company) {
         return CompletableFuture.supplyAsync(() -> {
-
             Map<String, String> param = new HashMap<>();
             param.put(stockKeyCode, company.getSymbol());
-
-            ResponseEntity<CompanyDto> response = restTemplate.getForEntity(urlStockApi, CompanyDto.class, param);
-            CompanyDto fromApi = response.getBody();
-
-            if (Objects.nonNull(fromApi)) {
-                company.setPreviousVolume(fromApi.getPreviousVolume());
-                company.setVolume(fromApi.getVolume());
-                company.setLatestPrice(fromApi.getLatestPrice());
+            ResponseEntity<CompanyDto> response;
+            try {
+                response = restTemplate.getForEntity(urlStockApi, CompanyDto.class, param);
+                CompanyDto fromApi = response.getBody();
+                if (Objects.nonNull(fromApi)) {
+                    company.setCompanyName(fromApi.getCompanyName());
+                    company.setPreviousVolume(fromApi.getPreviousVolume());
+                    company.setVolume(fromApi.getVolume());
+                    company.setLatestPrice(fromApi.getLatestPrice());
+                }
+            } catch (Exception e) {
+                log.error("Symbol: {}, {}", company.getSymbol(), e.getMessage());
             }
             return company;
         });

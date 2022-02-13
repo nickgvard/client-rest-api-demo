@@ -20,6 +20,7 @@ public class CompanyDto {
     @ToString.Exclude
     private Long id;
     private String symbol;
+    private String companyName;
     @ToString.Exclude
     private Boolean isEnabled;
     @ToString.Exclude
@@ -34,6 +35,7 @@ public class CompanyDto {
                 .builder()
                 .id(company.getId())
                 .symbol(company.getSymbol())
+                .companyName(company.getCompanyName())
                 .isEnabled(company.getIsEnabled())
                 .previousVolume(company.getPreviousVolume())
                 .volume(company.getVolume())
@@ -46,6 +48,7 @@ public class CompanyDto {
                 .builder()
                 .id(companyDto.getId())
                 .symbol(companyDto.getSymbol())
+                .companyName(companyDto.getCompanyName())
                 .isEnabled(companyDto.getIsEnabled())
                 .previousVolume(companyDto.getPreviousVolume())
                 .volume(companyDto.getVolume())
