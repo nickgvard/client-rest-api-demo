@@ -1,18 +1,17 @@
 
-#### This pet-project using an open source Stocks feed API. The documentation is here: https://iexcloud.io/docs/api/
-##### Async query the stocks API. There are multiple threads processing the queue. 
+#### This pet-project is REST API with authentication and registration.
+##### Provides access to read data from the iexcloud-api-demo project. 
 ##### Saves data from each stock quote to a database structure.
-##### Output statistics, for example: 
-> ##### The top 5 highest value stocks (in order – largest first, then order by company name)
-> ##### The most recent 5 companies that have the greatest change percent in stock value.
-##### Project deploymend on AWS ECS cluster.
+##### The working container is deployed in an EKS cluster, with a configured pipeline and is available via the API.
+##### The service layer is covered with unit tests.
 
 ### Technology stack:
-+ Java
-+ Spring (IoC, Data)
-+ MySQL
++ Java 17
++ Spring (IoC, Data, Security, Web)
++ PostgreSQL
 + Hibernate
 + Gradle
-+ Flyway
++ Liquibase
 + Docker
-+ AWS SDK (ECR, ECS)
++ AWS (EKS)
++ Oauth2
