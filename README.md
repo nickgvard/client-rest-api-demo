@@ -1,5 +1,5 @@
 
-### This pet-project using an open source Stocks feed API. The documentation is here: https://iexcloud.io/docs/api/
+#### This pet-project using an open source Stocks feed API. The documentation is here: https://iexcloud.io/docs/api/
 ##### Async query the stocks API. There are multiple threads processing the queue. 
 ##### Saves data from each stock quote to a database structure.
 ##### Output statistics, for example: 
