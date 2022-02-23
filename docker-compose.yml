@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  pgsqldb:
+    image: postgres:14
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - POSTGRES_PASSWORD=$PGDB_PASSWORD
+      - POSTGRES_USER=$PGDB_USER
+    ports:
+      - $PGDB_LOCAL_PORT:$PGDB_DOCKER_PORT
+    volumes:
+      - db:/var/lib/postgres
+  iexcloud-api:
+    depends_on:
+      - pgsqldb
+    build:
+      dockerfile: Dockerfile
+    restart: on-failure
+    env_file: .env
+    ports:
+      - $API_LOCAL_PORT:$API_DOCKER_PORT
+    environment:
+      - DB_URL=$PGDB_URL//pgsqldb:$PGDB_DOCKER_PORT/$PGDB_DATABASE
+      - DB_USER=$PGDB_USER
+      - DB_PASS=$PGDB_PASSWORD
+    stdin_open: true
+    tty: true
+volumes:
+  db:
