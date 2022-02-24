@@ -45,18 +45,21 @@ public class CompanyServiceImpl implements CompanyService {
     @Async
     @Override
     public CompletableFuture<List<CompanyDto>> findAll() {
-        ResponseEntity<List<CompanyDto>> responseEntity = restTemplate
-                .exchange(
-                        apiCompanies,
-                        HttpMethod.GET,
-                        null,
-                        new ParameterizedTypeReference<>() {
-                        });
+        log.info("company findAll - start");
+        List<CompanyDto> companies = null;
+        try {
+            ResponseEntity<List<CompanyDto>> responseEntity = restTemplate
+                    .exchange(
+                            apiCompanies,
+                            HttpMethod.GET,
+                            null,
+                            new ParameterizedTypeReference<>() {
+                            });
 
-        List<CompanyDto> companies = responseEntity.getBody();
-
-        if (Objects.isNull(companies))
-            log.error("The API response returned is null");
+            companies = responseEntity.getBody();
+        }catch (Exception e) {
+            log.error("The API is invalid {}", e.getMessage());
+        }
         return CompletableFuture.completedFuture(companies);
     }
 
@@ -86,6 +89,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Async
     @Override
     public CompletableFuture<List<CompanyDto>> saveAll(List<CompanyDto> companies) {
+        log.info("company saveAll - start, companies.size(): {}", companies.size());
         return CompletableFuture.supplyAsync(() -> {
             List<Company> forSave = companies
                     .stream()
@@ -114,6 +118,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Async
     @Override
     public CompletableFuture<List<CompanyDto>> findTop5CompaniesAndOther() {
+        log.info("company findTop5CompaniesAndOther start");
         List<CompanyDto> topFive = repository
                 .findTop5By(
                         Sort.by(Sort.Direction.DESC, "previousVolume", "volume"))
