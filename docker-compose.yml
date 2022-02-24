@@ -22,8 +22,8 @@ services:
       - $API_LOCAL_PORT:$API_DOCKER_PORT
     environment:
       - DB_URL=$PGDB_URL//pgsqldb:$PGDB_DOCKER_PORT/$PGDB_DATABASE
-      - DB_USER=$PGDB_USER
-      - DB_PASS=$PGDB_PASSWORD
+      - POSTGRES_USER=$PGDB_USER
+      - POSTGRES_PASSWORD=$PGDB_PASSWORD
     stdin_open: true
     tty: true
 volumes:
