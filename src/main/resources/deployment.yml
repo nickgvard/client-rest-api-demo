@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: iexcloud-api
+  labels:
+    name: iexcloud-api
+spec:
+  ports:
+    - nodePort: 30160
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: iexcloud-api
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iexcloud-api
+spec:
+  selector:
+    matchLabels:
+      app: iexcloud-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: iexcloud-api
+    spec:
+      containers:
+        - name: iexcloud-api
+          image: 913541760421.dkr.ecr.eu-central-1.amazonaws.com/iexcloud-api:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf
+                  key: host
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: postgres_password

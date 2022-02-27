@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: postgres-conf
 data:
-  host: postgres
+  host: jdbc:postgresql://postgres:5432/iexcloudapidb
   name: iexcloudapidb

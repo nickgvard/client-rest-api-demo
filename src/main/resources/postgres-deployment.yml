@@ -11,7 +11,7 @@ spec:
   selector:
     app: postgres
     tier: database
-  clusterIp: None
+  clusterIP: None
 
 ---
 apiVersion: v1
@@ -21,15 +21,15 @@ metadata:
   labels:
     app: postgres
     tier: database
-  spec:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      request:
-        storage: 1Gi
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 
 ---
-apiVersion: v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
@@ -59,15 +59,15 @@ spec:
                   name: postgres-credentials
                   key: postgres_user
             - name: POSTGRES_PASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    name: postgres-credentials
-                    key: postgres_password
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: postgres_password
             - name: POSTGRES_DB
-                valueFrom:
-                  configMapKeyRef:
-                    name: postgres-conf
-                    key: name
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf
+                  key: name
           ports:
             - containerPort: 5432
               name: postgres
@@ -76,5 +76,5 @@ spec:
               name: postgres-persistance-storage
       volumes:
         - name: postgres-persistance-storage
-          persistanceVolumeClaim:
+          persistentVolumeClaim:
             claimName: postgres-pv-claim

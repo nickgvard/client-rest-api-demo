@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM bellsoft/liberica-openjdk-alpine-musl:17
 
 RUN mkdir -p /usr/src/app/
 WORKDIR /usr/src/app/
